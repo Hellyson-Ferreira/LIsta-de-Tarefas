@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'dart:async';
-import 'dart:convert';
+import 'package:save_json/models/bancoBD.dart';
 
-
+import 'models/item.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -12,39 +10,45 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   TextEditingController newTaskCtrl = TextEditingController();
-  List data;
-   Future<String> loadJsonFile() async{
-    var jsonFile = await rootBundle.loadString('assets/json/item.json');
-    setState(() {
-      data = json.decode(jsonFile);
-    });
-    
+  List<Item> data;
+  final banco = Banco.instance;
+
+  _HomePageState() {
+    data = new List<Item>();
+    load();
   }
 
-  void add() {
-    if(newTaskCtrl.text.isEmpty) return;
-    print(data);
+  // void transformaaListaemMapStringDynamic() {
+  //   List<Map<String, dynamic>> lista = [];
+  //   for (var i in data) {
+  //     lista.add(i.toJson());
+  //   }
+  // }
+
+  Future load() async {
+    final listatemp = await banco.getall();
     setState(() {
-      data.add({"title":"${newTaskCtrl.text}"});
+      data = listatemp;
+    });
+
+    // transformaaListaemMapStringDynamic();
+  }
+
+  Future<void> add() async {
+    if (newTaskCtrl.text.isEmpty) return;
+    setState(() {
+      Item item = Item(title: "${newTaskCtrl.text}");
+      banco.insertItem(item.toJson());
       newTaskCtrl.clear();
     });
-    print(data);
-    
-  }
- 
-  void remove(index) {
-    setState(() {
-      data.removeAt(index);
-      
-    });
-    print(data);
+    await load();
   }
 
-  @override
-  void initState() {
-
-    this.loadJsonFile();
+  Future<void> remove(id) async {
+    await banco.deleteItem('$id');
+    await load();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,35 +72,36 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               Dismissible(
                 child: ListTile(
-                  title: Text(datas['title']),
-                  subtitle: Text(datas.toString()),
-                  
-                  
+                  title: Text('${datas.title}'),
+                  subtitle: Text('${datas.id}'),
                 ),
                 key: Key(datas.toString()),
                 direction: DismissDirection.endToStart,
-                
                 onDismissed: (direction) {
-                  if (direction == DismissDirection.endToStart){
-                    remove(index);
-                  }                  
+                  if (direction == DismissDirection.endToStart) {
+                    remove(datas.id);
+                  }
                 },
                 background: Container(
                   color: Colors.red.withOpacity(0.4),
-                   child: Padding(
-                     padding: const EdgeInsets.all(8.0),
-                     child: Icon(Icons.close),
-                   ),
-                   alignment: Alignment.centerRight,
-                ), 
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Icon(Icons.close),
+                  ),
+                  alignment: Alignment.centerRight,
+                ),
               ),
-              Divider(color: Colors.grey,),
+              Divider(
+                color: Colors.grey,
+              ),
             ],
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: add,
+        onPressed: () {
+          add();
+        },
         child: Icon(Icons.add),
         backgroundColor: Colors.pink,
       ),
