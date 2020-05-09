@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:save_json/models/bancoBD.dart';
-
 import 'models/item.dart';
 
 class HomePage extends StatefulWidget {
@@ -34,7 +33,7 @@ class _HomePageState extends State<HomePage> {
     // transformaaListaemMapStringDynamic();
   }
 
-  Future<void> add() async {
+  Future<void> add(String texto) async {
     if (newTaskCtrl.text.isEmpty) return;
     setState(() {
       Item item = Item(title: "${newTaskCtrl.text}");
@@ -49,19 +48,44 @@ class _HomePageState extends State<HomePage> {
     await load();
   }
 
+  showAlertDialog(BuildContext context) {
+    AlertDialog alerta = AlertDialog(
+      title: Text('Nova Tarefa'),
+      content: TextField(
+        controller: newTaskCtrl,
+        autofocus: true,
+      ),
+      actions: <Widget>[
+        FlatButton(
+          child: Text('Cancelar'),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        FlatButton(
+          child: Text('Adicionar'),
+          onPressed: () {
+            add(newTaskCtrl.value.text);
+            newTaskCtrl.clear();
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alerta;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         //Tirar Text
-        title: TextFormField(
-          keyboardType: TextInputType.text,
-          controller: newTaskCtrl,
-          decoration: InputDecoration(
-            labelText: "Adicionar perguntas",
-            labelStyle: TextStyle(color: Colors.white),
-          ),
-        ),
+        title: Text('Tarefas'),
       ),
       body: ListView.builder(
         itemCount: data.length,
@@ -72,8 +96,8 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               Dismissible(
                 child: ListTile(
-                  title: Text('${datas.title}'),
-                  subtitle: Text('${datas.id}'),
+                  title: Text('${datas.id} - ${datas.title}'),
+                  //subtitle: Text('${datas.id}'),
                 ),
                 key: Key(datas.toString()),
                 direction: DismissDirection.endToStart,
@@ -83,10 +107,10 @@ class _HomePageState extends State<HomePage> {
                   }
                 },
                 background: Container(
-                  color: Colors.red.withOpacity(0.4),
+                  color: Colors.red.withOpacity(0.9),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Icon(Icons.close),
+                    child: Icon(Icons.delete),
                   ),
                   alignment: Alignment.centerRight,
                 ),
@@ -99,9 +123,8 @@ class _HomePageState extends State<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          add();
-        },
+        onPressed: () => showAlertDialog(context),
+        tooltip: 'Adicionar',
         child: Icon(Icons.add),
         backgroundColor: Colors.pink,
       ),
